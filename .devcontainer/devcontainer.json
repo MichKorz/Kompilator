@@ -1,0 +1,26 @@
+{
+    "name": "Kompilator (Python SLY)",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/usr/local/bin/python",
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": true,
+                "editor.formatOnSave": true
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "njpwerner.autodocstring"
+            ]
+        }
+    },
+    // To jest najważniejsza część:
+    // Po utworzeniu kontenera uruchamiamy "make install" z Twojego Makefile.
+    // Dzięki temu środowisko jest gotowe od razu po otwarciu.
+    "postCreateCommand": "make all",
+    "remoteUser": "vscode"
+}
