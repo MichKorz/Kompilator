@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Pliki wynikowe kompilacji maszyny wirtualnej (w folderze vm)
+vm/*.o
+vm/maszyna-wirtualna
+vm/maszyna-wirtualna-cln
+vm/lexer.cc
+vm/parser.cc
+vm/parser.hh
+
+# Pliki generowane przez SLY (jeśli się pojawią)
+parser.out
+parsetab.py
+
+# Twój skrypt uruchomieniowy
+kompilator
+
+# Pliki wyjściowe (wyniki testów)
+*.mr

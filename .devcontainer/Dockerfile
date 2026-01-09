@@ -6,10 +6,14 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Buforowanie wyjścia (żeby print() pojawiał się od razu w konsoli)
 ENV PYTHONUNBUFFERED=1
 
-# Opcjonalnie: Instalacja dodatkowych narzędzi systemowych
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     vim \
-#     && rm -rf /var/lib/apt/lists/*
+# Aktualizacja listy pakietów i instalacja narzędzi do maszyny wirtualnej
+RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get -y install --no-install-recommends \
+    build-essential \
+    flex \
+    bison \
+    libcln-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Ustawiamy katalog roboczy
 WORKDIR /workspace

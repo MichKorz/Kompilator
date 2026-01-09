@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import sys
 import os
-# Ustawienie ścieżki, aby python widział moduły w bieżącym katalogu
-sys.path.append(os.getcwd())
+# Dodajemy katalog src do ścieżki wyszukiwania modułów
+sys.path.append(os.path.join(os.getcwd(), "src"))
 from main import main
 if __name__ == "__main__":
     main()

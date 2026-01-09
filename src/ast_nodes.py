@@ -52,3 +52,42 @@ class Array(Node):
 
     def __repr__(self):
         return f"Arr({self.name}[{self.start}:{self.end}])"
+
+# --- Komendy ---
+
+
+class Assign(Node):
+    def __init__(self, identifier, expression):
+        self.identifier = identifier  # Nazwa zmiennej (string)
+        self.expression = expression  # Co przypisujemy (Node)
+
+    def __repr__(self):
+        return f"{self.identifier} := {self.expression}"
+
+
+class Write(Node):
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return f"WRITE {self.value}"
+
+# --- Wyrażenia ---
+
+
+class BinOp(Node):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.op = op
+        self.right = right
+
+    def __repr__(self):
+        return f"({self.left} {self.op} {self.right})"
+
+
+class Number(Node):
+    def __init__(self, value):
+        self.value = value
+
+    def __repr__(self):
+        return str(self.value)
