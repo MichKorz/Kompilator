@@ -91,3 +91,52 @@ class Number(Node):
 
     def __repr__(self):
         return str(self.value)
+
+# --- Vertical slice 2 --- #
+
+
+class Condition(Node):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.op = op
+        self.right = right
+
+    def __repr__(self):
+        return f"Cond({self.left} {self.op} {self.right})"
+
+
+class If(Node):
+    def __init__(self, condition, commands_then, commands_else=None):
+        self.condition = condition
+        self.commands_then = commands_then  # Lista komend
+        self.commands_else = commands_else  # Lista komend lub None
+
+    def __repr__(self):
+        else_part = " ELSE ..." if self.commands_else else ""
+        return f"IF {self.condition} THEN ...{else_part} ENDIF"
+
+
+class While(Node):
+    def __init__(self, condition, commands):
+        self.condition = condition
+        self.commands = commands
+
+    def __repr__(self):
+        return f"WHILE {self.condition} DO ..."
+
+
+class Repeat(Node):
+    def __init__(self, commands, condition):
+        self.commands = commands
+        self.condition = condition
+
+    def __repr__(self):
+        return f"REPEAT ... UNTIL {self.condition}"
+
+
+class Read(Node):
+    def __init__(self, identifier):
+        self.identifier = identifier
+
+    def __repr__(self):
+        return f"READ {self.identifier}"

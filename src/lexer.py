@@ -33,7 +33,7 @@ class KompilatorLexer(Lexer):
     # Ignorujemy komentarze
     ignore_comment = r'\#.*'
 
-    # --- Definicje Tokenów (Operatorów) ---
+    # --- Definicje Tokenów (Operatorów) --- (Regexs)
     ASSIGN = r':='
     NEQ = r'!='
     GE = r'>='

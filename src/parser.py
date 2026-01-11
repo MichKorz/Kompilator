@@ -1,32 +1,33 @@
-# parser.py
 from sly import Parser
 from lexer import KompilatorLexer
+# Upewnij się, że masz zaimportowane wszystkie węzły
 from ast_nodes import *
 
 
 class KompilatorParser(Parser):
     tokens = KompilatorLexer.tokens
 
-    # Priorytety operatorów (rozwiązują konflikty shift/reduce)
+    # --- Priorytety operatorów ---
+    # Im niżej na liście, tym wyższy priorytet (mnożenie wiąże mocniej niż dodawanie)
     precedence = (
         ('left', 'PLUS', 'MINUS'),
         ('left', 'TIMES', 'DIV', 'MOD'),
     )
 
-    # --- Program Structure ---
+    # --- Program Structure (bez zmian) ---
     @_('procedures main')
     def program_all(self, p):
         return Program(p.procedures, p.main)
 
     @_('')
     def procedures(self, p):
-        return []  # Na razie ignorujemy procedury dla MVP
+        return []
 
     @_('PROGRAM IS declarations IN commands END')
     def main(self, p):
         return Main(p.declarations, p.commands)
 
-    # --- Declarations (uproszczone: tylko zmienne, bez tablic na razie) ---
+    # --- Declarations (bez zmian) ---
     @_('declarations COMMA PIDENTIFIER')
     def declarations(self, p):
         p.declarations.append(p.PIDENTIFIER)
@@ -36,12 +37,11 @@ class KompilatorParser(Parser):
     def declarations(self, p):
         return [p.PIDENTIFIER]
 
-    # Obsługa pustych deklaracji (jeśli dozwolone) lub błędów
     @_('')
     def declarations(self, p):
         return []
 
-    # --- Commands ---
+    # --- Commands (bez zmian + dodane READ z poprzedniego kroku) ---
     @_('commands command')
     def commands(self, p):
         p.commands.append(p.command)
@@ -51,28 +51,58 @@ class KompilatorParser(Parser):
     def commands(self, p):
         return [p.command]
 
-    # Pojedyncza komenda: Przypisanie
     @_('PIDENTIFIER ASSIGN expression SEMICOLON')
     def command(self, p):
         return Assign(p.PIDENTIFIER, p.expression)
 
-    # Pojedyncza komenda: WRITE
     @_('WRITE value SEMICOLON')
     def command(self, p):
         return Write(p.value)
 
-    # --- Expressions ---
+    @_('READ PIDENTIFIER SEMICOLON')
+    def command(self, p):
+        return Read(p.PIDENTIFIER)
+
+    # Instrukcje sterujące (IF, WHILE, REPEAT - te, które dodaliśmy wcześniej)
+    @_('IF condition THEN commands ELSE commands ENDIF')
+    def command(self, p):
+        return If(p.condition, p.commands0, p.commands1)
+
+    @_('IF condition THEN commands ENDIF')
+    def command(self, p):
+        return If(p.condition, p.commands, None)
+
+    @_('WHILE condition DO commands ENDWHILE')
+    def command(self, p):
+        return While(p.condition, p.commands)
+
+    @_('REPEAT commands UNTIL condition SEMICOLON')
+    def command(self, p):
+        return Repeat(p.commands, p.condition)
+
+    # --- Conditions (bez zmian) ---
+    @_('value EQ value', 'value NEQ value',
+       'value GT value', 'value LT value',
+       'value GE value', 'value LE value')
+    def condition(self, p):
+        return Condition(p.value0, p[1], p.value1)
+
+    # --- Expressions (TUTAJ JEST KLUCZOWA ZMIANA) ---
     @_('value')
     def expression(self, p):
         return p.value
 
-    @_('value PLUS value')
+    # Dodajemy obsługę wszystkich operatorów arytmetycznych
+    @_('value PLUS value',
+       'value MINUS value',
+       'value TIMES value',
+       'value DIV value',
+       'value MOD value')
     def expression(self, p):
-        return BinOp(p.value0, '+', p.value1)
+        # p[1] to operator (+, -, *, /, %) jako string
+        return BinOp(p.value0, p[1], p.value1)
 
-    # Inne operatory dodasz tutaj później...
-
-    # --- Values ---
+    # --- Values (bez zmian) ---
     @_('NUM')
     def value(self, p):
         return Number(p.NUM)
