@@ -1,94 +1,76 @@
 class Symbol:
-    def __init__(self, name, address, is_array=False, array_start=0, array_end=0, is_iterator=False):
+    def __init__(self, name, address, is_array=False, array_start=0, array_end=0, is_iterator=False, is_param=False):
         self.name = name
-        self.address = address       # Fizyczny adres w pamięci VM (p_i)
+        self.address = address       # Fizyczny adres w pamięci
         self.is_array = is_array
-        # Indeks początkowy (dla tab[10:20] -> 10)
         self.array_start = array_start
-        self.array_end = array_end     # Indeks końcowy
-        # Czy jest to iterator pętli FOR (read-only)
+        self.array_end = array_end
         self.is_iterator = is_iterator
-        self.is_initialized = False    # Czy zmienna ma nadaną wartość
+        self.is_param = is_param     # Czy zmienna jest parametrem procedury
+        self.is_initialized = False
 
     def __repr__(self):
-        type_s = f"Array[{self.array_start}:{self.array_end}]" if self.is_array else "Var"
-        iter_s = " (Iterator)" if self.is_iterator else ""
-        return f"<{self.name}: {type_s} @ {self.address}{iter_s}>"
+        type_s = "Param" if self.is_param else (
+            "Array" if self.is_array else "Var")
+        return f"<{self.name}: {type_s} @ {self.address}>"
 
 
 class SymbolTable:
     def __init__(self):
         # Stos zakresów. Każdy element to słownik {nazwa: Symbol}
-        # Na początku mamy zakres globalny (choć w tym języku zmienne są w Main lub Procedurach)
+        # scope[0] to zmienne globalne (Main), scope[1+] to zmienne lokalne procedur
         self.scopes = [{}]
-
-        # Licznik wolnych komórek pamięci w maszynie wirtualnej
-        # Zaczynamy od 0, ale rejestry r_a..r_h są osobne, więc p_0 jest bezpieczne.
         self.memory_offset = 0
 
     def enter_scope(self):
-        """Wchodzi do nowego zakresu (np. początek procedury)"""
         self.scopes.append({})
 
     def exit_scope(self):
-        """Wychodzi z zakresu (koniec procedury)"""
         self.scopes.pop()
 
     def get(self, name):
-        """
-        Szuka symbolu. Zgodnie z, w procedurze widzimy tylko zmienne lokalne/parametry.
-        Dlatego szukamy TYLKO w obecnym zakresie (self.scopes[-1]).
-        """
-        current_scope = self.scopes[-1]
-        if name in current_scope:
-            return current_scope[name]
-
+        # Szukaj od najnowszego zakresu (lokalnego) w górę
+        for scope in reversed(self.scopes):
+            if name in scope:
+                return scope[name]
         raise Exception(f"Błąd: Niezadeklarowana zmienna '{name}'")
 
-    def declare_variable(self, name, is_iterator=False):
-        """Deklaruje zwykłą zmienną"""
+    def declare_variable(self, name):
         current_scope = self.scopes[-1]
-
         if name in current_scope:
-            raise Exception(
-                f"Błąd: Druga deklaracja zmiennej '{name}'")  # [cite: 4]
+            raise Exception(f"Błąd: Druga deklaracja zmiennej '{name}'")
 
-        # Przydziel adres w pamięci
         address = self.memory_offset
         self.memory_offset += 1
 
-        symbol = Symbol(name, address, is_iterator=is_iterator)
+        symbol = Symbol(name, address)
         current_scope[name] = symbol
         return symbol
 
     def declare_array(self, name, start, end):
-        """Deklaruje tablicę tab[start:end]"""
         current_scope = self.scopes[-1]
-
         if name in current_scope:
             raise Exception(f"Błąd: Druga deklaracja zmiennej '{name}'")
 
-        # Walidacja zakresu tablicy
-        if start > end:
-            raise Exception(
-                f"Błąd: Niepoprawny zakres tablicy '{name}' ({start} > {end})")
-
-        # Oblicz rozmiar tablicy
         size = end - start + 1
-
-        # Przydziel blok pamięci
-        base_address = self.memory_offset
+        address = self.memory_offset
         self.memory_offset += size
 
-        symbol = Symbol(name, base_address, is_array=True,
+        symbol = Symbol(name, address, is_array=True,
                         array_start=start, array_end=end)
         current_scope[name] = symbol
         return symbol
 
-    def get_iterator(self, name):
-        """Pomocnicza funkcja do sprawdzania modyfikacji iteratora"""
-        try:
-            sym = self.get(name)
-            return sym.is_iterator
-        except:
-            return False
+    def declare_param(self, name, is_array=False):
+        """Deklaruje parametr procedury (zawsze pojedyncza komórka pamięci).
+        Jeśli is_array=True, zmienna przechowuje wirtualny adres bazowy tablicy."""
+        current_scope = self.scopes[-1]
+        if name in current_scope:
+            raise Exception(f"Błąd: Duplikat parametru '{name}'")
+
+        address = self.memory_offset
+        self.memory_offset += 1
+
+        symbol = Symbol(name, address, is_array=is_array, is_param=True)
+        current_scope[name] = symbol
+        return symbol
